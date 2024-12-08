@@ -8,11 +8,61 @@ const EventWrapper: React.FC<EventWrapperProps<CalendarEvent>> = ({
   onDoubleClick,
   style,
   className,
-}) => {
+}) => { 
+  // Map statuses to colors
+  const getBackgroundColor = (event: CalendarEvent): string => {
+    const now = dayjs();
+    const eventStart = dayjs(event.start);
+
+    if (
+      now.isAfter(eventStart) &&
+      !event.AppointmentStatus?.CheckedIn?.Doctor?.Joined &&
+      !event.AppointmentStatus?.CheckedIn?.Patient?.Joined
+    ) {
+      return 'gray'; // Grayed out
+    }
+    if (event.AppointmentStatus?.NoShow) {
+      return 'orange';
+    }
+    if (event.AppointmentStatus?.Rescheduled) {
+      return 'lightblue';
+    }
+    if (event.AppointmentStatus?.Completed?.PaymentDone) {
+      return 'lightgray';
+    }
+    if (event.AppointmentStatus?.MeetingCompleted) {
+      return 'gray';
+    }
+    if (
+      event.AppointmentStatus?.CheckedIn?.Doctor?.Joined ||
+      event.AppointmentStatus?.CheckedIn?.Patient?.Joined
+    ) {
+      return 'green';
+    }
+    if (
+      event.AppointmentStatus?.checkedOut?.Doctor?.Ended ||
+      event.AppointmentStatus?.checkedOut?.Patient?.Ended
+    ) {
+      return 'purple';
+    }
+    if (event.AppointmentStatus?.Booked) {
+      return 'blue';
+    }
+    return 'transparent'; // Default fallback
+  };
+
+  const backgroundColor = getBackgroundColor(event);
+  const textColor =
+    backgroundColor === 'green' || backgroundColor === 'blue' || backgroundColor === 'purple'
+      ? 'white'
+      : 'black';
+
   return (
     <div
       onClick={onClick}
       style={{
+        backgroundColor,
+        color: textColor,
         height: `${style?.height}%`,
         top: `${style?.top}%`,
         width: `${style?.width}%`,
@@ -20,13 +70,7 @@ const EventWrapper: React.FC<EventWrapperProps<CalendarEvent>> = ({
       }}
       className={`p-0.5 rbc-event whitespace-nowrap overflow-hidden text-ellipsis ${className}`}
     >
-      {/* <div
-        
-        style={{ borderWidth: 1 }}
-        className="cal-event-wrapper whitespace-nowrap overflow-hidden text-ellipsis"
-      > */}
       {dayjs(event.start).format('hh:mm a')} - {event.title}
-      {/* </div> */}
     </div>
   );
 };

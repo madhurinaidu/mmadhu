@@ -106,6 +106,7 @@ export function Calendar({
           <EventDetail
             event={eventDetail as unknown as Event}
             callUrl={callUrl}
+            token={props.token}
           />
         )}
       </Modal>

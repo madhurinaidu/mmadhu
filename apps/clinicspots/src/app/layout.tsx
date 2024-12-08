@@ -1,5 +1,5 @@
-import { Header } from '@app/components';
-import { NextAuthProvider } from '@app/components/AuthProvider';
+// import { Header } from '@app/components';
+// import { NextAuthProvider } from '@app/components/AuthProvider';
 import { fonts } from '@libs/config';
 import { ThemeProvider, ToastProvider } from '@libs/ui';
 import './global.css';
@@ -19,12 +19,12 @@ export default function RootLayout({
       <body className={`${fonts.inter.className}`}>
         <ThemeProvider>
           <ToastProvider>
-            <NextAuthProvider>
+            {/* <NextAuthProvider> */}
               <div className="min-h-screen">
-                <Header />
+                {/* <Header /> */}
                 <div style={{ marginTop: 64 }}>{children}</div>
               </div>
-            </NextAuthProvider>
+            {/* </NextAuthProvider> */}
           </ToastProvider>
         </ThemeProvider>
       </body>

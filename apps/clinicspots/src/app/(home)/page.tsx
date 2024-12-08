@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { FindDoctorCard, Search, VideoConsultationCard } from '@app/components';
+// import { FindDoctorCard, Search, VideoConsultationCard } from '@app/components';
 import { Container } from '@libs/ui';
 import Specialities from './Specialities';
 import './style.css';
@@ -19,7 +19,7 @@ export default function Home() {
           <p className="text-lg mb-8 text-gray-500 dark:text-gray-300">
             Search by location or specialist to book your next appointment.
           </p>
-          <Search />
+          {/* <Search /> */}
         </Container>
         <img
           src="https://healthconnect247.com/wp-content/uploads/2021/11/7.png"
@@ -33,8 +33,8 @@ export default function Home() {
       <section className="py-10">
         <Container isPatient>
           <div className="flex flex-col items-center md:flex-row md:justify-center gap-10">
-            <VideoConsultationCard />
-            <FindDoctorCard />
+            {/* <VideoConsultationCard />
+            <FindDoctorCard /> */}
           </div>
         </Container>
       </section>

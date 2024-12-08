@@ -157,16 +157,22 @@ const DateTabs = ({ tabs, daySlots, onSlotSelect }: IDateTabsProps) => {
           daySlots={daySlots.morning}
           title="Morning"
           onSlotSelect={handleSlotSelect}
+          activeDate={dayjs(tabs[activeTab].date).toDate()} // Convert to Date
+
         />
         <DaySlots
           daySlots={daySlots.afternoon}
           title="Afternoon"
           onSlotSelect={handleSlotSelect}
+          activeDate={dayjs(tabs[activeTab].date).toDate()} // Convert to Date
+
         />
         <DaySlots
           daySlots={daySlots.evening}
           title="Evening"
           onSlotSelect={handleSlotSelect}
+          activeDate={dayjs(tabs[activeTab].date).toDate()} // Convert to Date
+
         />
       </motion.div>
     </div>

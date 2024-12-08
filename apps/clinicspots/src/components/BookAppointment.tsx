@@ -8,11 +8,6 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-const doctor = {
-  name: 'Dr Satish',
-  email: 'satish1asapu@gmail.com',
-  id: '6724590987ee2165561bc050',
-};
 
 const daySlots = {
   morning: [
@@ -138,77 +133,189 @@ const weekSlots = [
   },
 ];
 
-export default function BookAppointment() {
+
+export default function BookAppointment({
+  doctorName,
+  doctorId,
+  address
+}: {
+  doctorName: string;
+  doctorId:number,
+  address:string
+
+}) {
+
+
   const [isOpen, setIsOpen] = useState(false);
+  const [consultType, setConsultType] = useState<'in-clinic' | 'video-consult'>(
+    'video-consult'
+  );
+  const [selectedSlot, setSelectedSlot] = useState<{
+    startTime: string;
+    endTime: string;
+  } | null>(null);
   const toast = useToast();
   const session = useSession();
   const router = useRouter();
-  const bookAppointment = () => {
+  const token = session.data?.user?.accessToken;
+  console.log('Token:', token);
+  const [doctorDetails, setDoctorDetails] = useState({
+    name: '',
+    clinicSpotsId: '',
+    userId: '',
+    emailId: '',
+  }); // Initial state for doctor details
+
+  const fetchAppointments = async () => {
+    try {
+      console.log('Fetching appointments...');
+      const response = await fetch(API.doctorList, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${session.data?.user?.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error details:', errorData);
+        throw new Error(`Error: ${response.status}`);
+      }
+  
+      const doctorListData = await response.json();
+  
+      // Find the matching doctor by clinicSpotsId
+      const doctorListArray = doctorListData.data || doctorListData; // Adjust this based on actual response structure
+    if (!Array.isArray(doctorListArray)) {
+      console.error('Expected an array, but got:', doctorListData);
+      throw new Error('Invalid API response format.');
+    }
+    console.log("doctorListArray",doctorListArray)
+    console.log("doctorId",doctorId)
+
+    // Find the matching doctor by clinicSpotsId
+    const matchingDoctor = doctorListArray.find(
+      (doctor: any) => doctor.clinicSpotsId === doctorId.toString()
+    );
+  
+      if (!matchingDoctor) {
+        toast?.open({
+          message: 'No matching doctor found for the clinic spot ID.',
+          variant: 'error',
+        });
+        return;
+      }
+  
+      // Set the Doctor object dynamically
+      setDoctorDetails({
+        name: doctorName,
+        clinicSpotsId: doctorId.toString(),
+        userId: matchingDoctor._id,
+        emailId: matchingDoctor.email,
+      });
+
+      console.log('Updated Doctor Details:', {
+        name: doctorName,
+        clinicSpotsId: doctorId.toString(),
+        userId: matchingDoctor._id,
+        emailId: matchingDoctor.email,
+      });
+      const appointmentsResponse = await fetch(`${API.allAppointents}?doctorId=${matchingDoctor._id}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${session.data?.user?.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (!appointmentsResponse.ok) {
+        const appointmentsErrorData = await appointmentsResponse.json();
+        console.error('Error fetching appointments:', appointmentsErrorData);
+        throw new Error(`Error: ${appointmentsResponse.status}`);
+      }
+  
+      const appointmentsData = await appointmentsResponse.json();
+      console.log('Appointments for Doctor:', appointmentsData);
+  
+      // Store the appointments in state or process them as needed
+      // Assuming there's a state for appointments
+      setDoctorAppointments(appointmentsData.data || []);
+   
+      console.log('Appointments Filter Response:', matchingDoctor);
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+    }
+  };
+  
+
+  const bookAppointment = async(type: 'in-clinic' | 'video-consult') => {
     if (session.status === 'unauthenticated') {
       router.push('/login');
     } else {
-      setIsOpen(true);
+      await fetchAppointments();
+      setConsultType(type); // Set the consultation type
+      setIsOpen(true); // Open the modal
     }
   };
-  const bookSlot = (startTime: string, endTime: string) => {
-    console.log('bookSlot', startTime, endTime);
-    fetch(API.bookAppointment, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${session.data?.user?.accessToken}`,
-      },
-      body: JSON.stringify({
-        repeats: '',
-        location: 'vijayawada',
-        meetingToBeVerified: true,
-        title: 'Demo11',
-        startTime: startTime,
-        endTime: endTime,
-        participants: {
-          Patients: {
-            name: session.data?.user?.name,
-            statusId: 1,
-            userId: session.data?.user?.id,
-          },
-          Doctor: {
-            emailid: doctor.email,
-            name: doctor.name,
-            userId: doctor.id,
-          },
-        },
-      }),
-    }).then(async (res) => {
-      if (res.status === 200) {
-        const data = await res.json();
-        const json = {
-          MeetingID: data.data[0].MeetingID,
-          MeetingRoomID: data.data[0].MeetingRoomID,
-          MeetingStatusID: data.data[0].MeetingStatusID,
-          MeetingToBeVerified: data.data[0].MeetingToBeVerified,
-          endTime: endTime,
-          patientName: session.data?.user?.name,
-          startTime: startTime,
-        };
-        fetch(`${API.doctorList}/${doctor.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${session.data?.user?.accessToken}`,
-          },
-          body: JSON.stringify(json),
-        }).then((res) => {
-          if (res.status === 200) {
-            setIsOpen(false);
-            router.push('/dashboard/appointments');
-            toast?.open({
-              message: 'Appointment booked successfully',
-              variant: 'success',
-            });
-          }
-        });
-      }
+  const handleSlotSelect = (startTime: string, endTime: string) => {
+    // Ensure valid date strings are set
+    const adjustedStartTime = dayjs(startTime).subtract(5, 'hour').subtract(30, 'minute');
+  const adjustedEndTime = dayjs(endTime).subtract(5, 'hour').subtract(30, 'minute');
+  setSelectedSlot({
+    startTime: adjustedStartTime.toISOString(),
+    endTime: adjustedEndTime.toISOString(),
     });
+  };
+
+  const confirmAppointment = () => {
+    if (selectedSlot) {
+      const { startTime, endTime } = selectedSlot;
+      const visitType = consultType === 'in-clinic' ? 'offline' : 'online';
+      fetch(API.bookAppointment, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.data?.user?.accessToken}`,
+        },
+        body: JSON.stringify({
+          repeats: '',
+          location: 'vijayawada',
+          meetingToBeVerified: true,
+          title: 'Demo11',
+          startTime: startTime,
+          endTime: endTime,
+          visit: visitType,
+          participants: {
+            Patients: {
+              name: session.data?.user?.name,
+              statusId: 1,
+              userId: session.data?.user?.id,
+            },
+            Doctor: doctorDetails,
+          },
+        }),
+      }).then(async (res) => {
+        if (res.status === 200) {
+          const data = await res.json();
+          const json = {
+            MeetingID: data.data[0].MeetingID,
+            MeetingRoomID: data.data[0].MeetingRoomID,
+            MeetingStatusID: data.data[0].MeetingStatusID,
+            MeetingToBeVerified: data.data[0].MeetingToBeVerified,
+            endTime: endTime,
+            patientName: session.data?.user?.name,
+            startTime: startTime,
+          };
+          setIsOpen(false);
+          router.push('/dashboard/appointments');
+          toast?.open({
+            message: 'Appointment booked successfully',
+            variant: 'success',
+          });
+        }
+      });
+    }
   };
   return (
     <>
@@ -217,26 +324,53 @@ export default function BookAppointment() {
         color="primary"
         fullWidth
         leftIcon={<PersonSimpleWalk />}
-        onClick={bookAppointment}
+        onClick={() => bookAppointment('in-clinic')}
       >
         Book Clinic Visit
       </Button>
+      <Button
+        variant="outlined"
+        className="border-2 whitespace-nowrap px-4 py-2 text-sm flex items-center gap-2"
+        color="warning"
+        fullWidth
+        leftIcon={<VideoCamera weight="fill" />}
+        onClick={() => bookAppointment('video-consult')}
+      >
+        Book Video Consultation
+      </Button>
+
       <Modal
         maxWidth="sm:max-w-2xl"
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
-        title="Book an appointment for Consultation"
+        // title={`Book an appointment for Consultation`}
       >
+        <div className="p-2 mb-2">
+          <h2 className="text-lg font-bold mb-2">
+            Book an appointment for Consultation
+          </h2>
+          <p className="text-md font-semibold text-gray-700">
+            Doctor: {doctorName}
+          </p>
+          {selectedSlot && (
+            <p className="text-md font-semibold text-gray-700">
+              Selected Slot: {dayjs(selectedSlot.startTime).format('hh:mm A')} -{' '}
+              {dayjs(selectedSlot.endTime).format('hh:mm A')}
+            </p>
+          )}
+        </div>
+
         <div className="flex flex-row justify-center">
           <ul className="grid w-full gap-6 md:grid-cols-2 max-w-md mb-4">
             <li>
               <input
                 type="radio"
-                id="hosting-small"
-                name="hosting"
-                value="hosting-small"
+                id="in-clinic"
+                name="consult-type"
+                value="in-clinic"
+                checked={consultType === 'in-clinic'}
+                onChange={() => setConsultType('in-clinic')}
                 className="hidden peer"
-                required
               />
               <label
                 htmlFor="hosting-small"
@@ -252,10 +386,11 @@ export default function BookAppointment() {
             <li>
               <input
                 type="radio"
-                id="hosting-big"
-                defaultChecked
-                name="hosting"
-                value="hosting-big"
+                id="video-consult"
+                name="consult-type"
+                value="video-consult"
+                checked={consultType === 'video-consult'}
+                onChange={() => setConsultType('video-consult')}
                 className="hidden peer"
               />
               <label
@@ -277,10 +412,18 @@ export default function BookAppointment() {
           <DateTabs
             tabs={weekSlots}
             daySlots={daySlots}
-            onSlotSelect={(startTime, endTime) => {
-              bookSlot(startTime, endTime);
-            }}
+            onSlotSelect={handleSlotSelect}
           />
+        </div>
+        <div className="mt-4 flex justify-end">
+          <Button
+            variant="filled"
+            color="primary"
+            disabled={!selectedSlot}
+            onClick={confirmAppointment}
+          >
+            Confirm Appointment
+          </Button>
         </div>
       </Modal>
     </>
