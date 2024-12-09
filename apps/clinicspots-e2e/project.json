@@ -7,3 +7,55 @@
   "// targets": "to see all targets run: nx show project clinicspots-e2e --web",
   "targets": {}
 }
+
+
+
+
+
+
+nx build clinicspots
+
+
+
+
+
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": "./",
+    "jsx": "preserve",
+    "allowJs": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "types": ["jest", "node"],
+    "paths": {
+      "@app/*": ["app/*"],
+      "@app/*": ["src/*]",
+      "@app/components/*":["src/components/*"],
+      "@libs/config": ["../../libs/config/src/index.ts"],
+      "@libs/ui": ["../../libs/ui/src/index.ts"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx",
+    "../../apps/clinicspots/.next/types/**/*.ts",
+    "../../dist/apps/clinicspots/.next/types/**/*.ts",
+    "next-env.d.ts",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules", "jest.config.ts", "**/*.spec.ts", "**/*.test.ts"]
+}
